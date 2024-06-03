@@ -30,6 +30,7 @@
 #include "thread.h"
 #include "pixel-mapper.h"
 #include "graphics.h"
+#include "sniffer.h"
 
 namespace rgb_matrix {
 class RGBMatrix;
@@ -325,8 +326,9 @@ public:
 private:
   class Impl;
 
-  RGBMatrix(Impl *impl) : impl_(impl) {}
+  RGBMatrix(Impl *impl) : impl_(impl), sniffer_(new Sniffer(this)) {}
   Impl *const impl_;
+  Sniffer *const sniffer_;
 };
 
 namespace internal {

@@ -746,14 +746,17 @@ int RGBMatrix::height() const {
 
 void RGBMatrix::SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue) {
   impl_->active_->SetPixel(x, y, red, green, blue);
+  sniffer_->SetPixel(x, y, red, green, blue);
 }
 
 void RGBMatrix::Clear() {
   impl_->active_->Clear();
+  sniffer_->Clear();
 }
 
 void RGBMatrix::Fill(uint8_t red, uint8_t green, uint8_t blue) {
   impl_->active_->Fill(red, green, blue);
+  sniffer_->Fill(red, green, blue);
 }
 
 // FrameCanvas implementation of Canvas
