@@ -22,9 +22,13 @@
 #include "canvas.h"
 
 namespace rgb_matrix {
+
+class FrameCanvas;
+
 class Sniffer : public Canvas {
   public:
-    Sniffer(Canvas *real) : real_(real) {}
+    Sniffer(Canvas *real, bool write=true) : real_(real), write_(write), init_done_(false) {}
+    ~Sniffer();
 
     virtual int width() const;
     virtual int height() const;
@@ -32,8 +36,11 @@ class Sniffer : public Canvas {
     virtual void Clear();
     virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
 
+    void SwapOnVSync(FrameCanvas *other);
+
   private:
     Canvas *const real_;
+    bool write_;
     bool init_done_;
     uint8_t *buf_;
     int width_;

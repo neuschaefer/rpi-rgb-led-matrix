@@ -387,12 +387,14 @@ public:
 
 private:
   friend class RGBMatrix;
+  friend class Sniffer;
 
-  FrameCanvas(internal::Framebuffer *frame) : frame_(frame){}
+  FrameCanvas(internal::Framebuffer *frame) : frame_(frame), sniffer_(new Sniffer(this, false)) {}
   virtual ~FrameCanvas();   // Any FrameCanvas is owned by RGBMatrix.
   internal::Framebuffer *framebuffer() { return frame_; }
 
   internal::Framebuffer *const frame_;
+  Sniffer *const sniffer_;
 };
 
 // Runtime options to simplify doing common things for many programs such as

@@ -701,6 +701,7 @@ FrameCanvas *RGBMatrix::CreateFrameCanvas() {
 }
 FrameCanvas *RGBMatrix::SwapOnVSync(FrameCanvas *other,
                                     unsigned framerate_fraction) {
+  sniffer_->SwapOnVSync(other);
   return impl_->SwapOnVSync(other, framerate_fraction);
 }
 bool RGBMatrix::ApplyPixelMapper(const PixelMapper *mapper) {
@@ -760,20 +761,26 @@ void RGBMatrix::Fill(uint8_t red, uint8_t green, uint8_t blue) {
 }
 
 // FrameCanvas implementation of Canvas
-FrameCanvas::~FrameCanvas() { delete frame_; }
+FrameCanvas::~FrameCanvas() { delete frame_; delete sniffer_; }
 int FrameCanvas::width() const { return frame_->width(); }
 int FrameCanvas::height() const { return frame_->height(); }
 void FrameCanvas::SetPixel(int x, int y,
                          uint8_t red, uint8_t green, uint8_t blue) {
   frame_->SetPixel(x, y, red, green, blue);
+  sniffer_->SetPixel(x, y, red, green, blue);
 }
 void FrameCanvas::SetPixels(int x, int y, int width, int height,
                          Color *colors) {
   frame_->SetPixels(x, y, width, height, colors);
+  //sniffer_->SetPixels(x, y, width, height, colors);
 }
-void FrameCanvas::Clear() { return frame_->Clear(); }
+void FrameCanvas::Clear() {
+  sniffer_->Clear();
+  return frame_->Clear();
+}
 void FrameCanvas::Fill(uint8_t red, uint8_t green, uint8_t blue) {
   frame_->Fill(red, green, blue);
+  sniffer_->Fill(red, green, blue);
 }
 bool FrameCanvas::SetPWMBits(uint8_t value) { return frame_->SetPWMBits(value); }
 uint8_t FrameCanvas::pwmbits() { return frame_->pwmbits(); }

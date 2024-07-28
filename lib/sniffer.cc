@@ -14,6 +14,7 @@
 // along with this program.  If not, see <http://gnu.org/licenses/gpl-2.0.txt>
 
 #include "sniffer.h"
+#include "led-matrix.h"
 
 #include <cstdlib>
 #include <cstdio>
@@ -52,28 +53,32 @@ void Sniffer::init() {
 
   char *path = getenv(PATH_VAR);
   if (path) {
-    // open the file
-    int fd = open(path, O_RDWR | O_CREAT, 0644);
-    if (fd == -1) {
-      fprintf(stderr, "Failed to open file \"%s\", specified in %s: %s\n", path, PATH_VAR, strerror(errno));
-      exit(1);
-    }
+    if (write_) {
+      // open the file
+      int fd = open(path, O_RDWR | O_CREAT, 0644);
+      if (fd == -1) {
+        fprintf(stderr, "Failed to open file \"%s\", specified in %s: %s\n", path, PATH_VAR, strerror(errno));
+        exit(1);
+      }
 
-    // set size
-    int res = ftruncate(fd, size_);
-    if (res == -1) {
-      fprintf(stderr, "Failed to resize file \"%s\", specified in %s: %s\n", path, PATH_VAR, strerror(errno));
-      exit(1);
-    }
+      // set size
+      int res = ftruncate(fd, size_);
+      if (res == -1) {
+        fprintf(stderr, "Failed to resize file \"%s\", specified in %s: %s\n", path, PATH_VAR, strerror(errno));
+        exit(1);
+      }
 
-    // mmap
-    void *p = mmap(NULL, size_, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    if (p == MAP_FAILED) {
-      fprintf(stderr, "Failed to map file \"%s\", specified in %s: %s\n", path, PATH_VAR, strerror(errno));
-      exit(1);
+      // mmap
+      void *p = mmap(NULL, size_, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+      if (p == MAP_FAILED) {
+        fprintf(stderr, "Failed to map file \"%s\", specified in %s: %s\n", path, PATH_VAR, strerror(errno));
+        exit(1);
+      }
+      close(fd);
+      buf_ = (uint8_t *)p;
+    } else {
+      buf_ = (uint8_t *)malloc(size_);
     }
-    close(fd);
-    buf_ = (uint8_t *)p;
 
     // write 24-bit BMP header
     //   https://github.com/corkami/pics/blob/master/binary/bmp1.png
@@ -89,10 +94,21 @@ void Sniffer::init() {
     put_le16(&buf_[0x16], 1);  // one plane
     put_le16(&buf_[0x18], 24); // 24 bpp
 
-    msync(buf_, size_, MS_SYNC);
+    if (write_)
+      msync(buf_, size_, MS_SYNC);
   }
 
   init_done_ = true;
+}
+
+Sniffer::~Sniffer() {
+  if (buf_) {
+    if (write_)
+      munmap(buf_, size_);
+    else
+      free(buf_);
+    buf_ = NULL;
+  }
 }
 
 int Sniffer::width() const {
@@ -131,6 +147,13 @@ void Sniffer::DoSetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue)
   p[0] = blue;
   p[1] = green;
   p[2] = red;
+}
+
+void Sniffer::SwapOnVSync(FrameCanvas *other) {
+  init();
+  if (buf_) {
+    memcpy(buf_, other->sniffer_->buf_, size_);
+  }
 }
 
 }
